@@ -14,6 +14,7 @@ venv/
 
 # 研究项目 - 原始材料不提交（可能含敏感信息）
 research/materials/
+research/inbox/
 
 # AceCamp 文章软链接（指向独立爬虫仓库）
 acecamp-articles

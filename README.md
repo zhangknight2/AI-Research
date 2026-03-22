@@ -22,20 +22,22 @@ research/
 acecamp-articles/ → 软链接到爬虫仓库的 articles/
 ```
 
+## 使用方式
+
+在 Claude Code 中打开本项目，CLAUDE.md 会自动加载。三种输入方式：
+
+1. **直接粘贴** — 在对话中贴材料文字，最常用
+2. **放文件到 inbox** — 将 PDF/Word/MD 放入 `research/inbox/`，然后说"处理inbox"
+3. **AceCamp 自动抓取** — 说"筛选新文章"触发批量筛选
+
+所有渠道的材料都会自动归档到 `research/materials/`，分析结果保存到 `research/analysis/`。
+
 ## 初始设置
 
-### 1. 配置 AceCamp 文章源
-
-爬虫仓库（AI-Research-Scraper）独立运行，通过软链接接入本项目：
-
 ```bash
-# 假设爬虫仓库在 ~/AI-Research-Scraper
+# 配置 AceCamp 文章源（软链接到爬虫仓库）
 ln -s ~/AI-Research-Scraper/articles acecamp-articles
 ```
-
-### 2. 使用
-
-在 Claude Code 中打开本项目，CLAUDE.md 会自动加载为系统提示词。直接丢材料即可开始分析。
 
 ## 关注领域
 

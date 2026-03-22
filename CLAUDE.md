@@ -27,8 +27,10 @@ research/
 │   ├── portfolio.md          # 持仓跟踪（每次分析前必查）
 │   ├── core_assumptions.md   # 核心变量与假设（证伪触发预警）
 │   ├── summary.md            # 项目汇总文档（增量迭代）
-│   └── index.md              # 所有分析的索引（快速检索历史）
-├── materials/                # 原始材料存放
+│   ├── index.md              # 所有分析的索引（快速检索历史）
+│   └── processed.md          # 已处理材料追踪（防重复）
+├── inbox/                    # 待处理收件箱（所有渠道的材料先到这里）
+├── materials/                # 已处理的原始材料归档
 │   ├── 纪要/
 │   ├── 研报/
 │   ├── 财报/
@@ -38,12 +40,40 @@ research/
 │   └── YYYYMMDD-信源标记-关键词.md
 └── archive/                  # 已过时/不再跟踪的内容
 
-acecamp-articles/ → 软链接到爬虫仓库的 articles/ 目录（AceCamp抓取的文章）
+acecamp-articles/ → 软链接到爬虫仓库的 articles/ 目录（AceCamp自动抓取）
 ```
 
-### AceCamp 文章接入
-`acecamp-articles/` 是指向独立爬虫仓库（AI-Research-Scraper）articles 目录的软链接。
-分析材料时也应搜索此目录。搜索原始材料时同时覆盖 `research/materials/` 和 `acecamp-articles/`。
+---
+
+## 三个输入渠道
+
+### 渠道1：AceCamp 文章（自动抓取）
+- `acecamp-articles/` 是指向独立爬虫仓库 articles/ 的软链接，爬虫每天自动抓取
+- 用户说 **"筛选新文章"** 或 **"看看acecamp有什么新的"** 时，触发批量筛选流程：
+  1. 扫描 `acecamp-articles/` 下所有 .md 文件
+  2. 对比 `research/knowledge_base/processed.md`，找出未处理的
+  3. 逐篇快速读取标题和前200字，做批量快筛
+  4. 输出筛选结果清单：🟢/🟡/🔴 + 一句话理由
+  5. 用户确认后，对🟢材料逐篇执行完整分析流程
+  6. 所有筛选结果（含🟡🔴）记录到 processed.md
+
+### 渠道2：其他渠道文件（手动放入）
+- 用户将文件（PDF/Word/MD/TXT）放入 `research/inbox/` 目录
+- 用户说 **"处理inbox"** 或 **"看看收件箱"** 时，触发处理流程：
+  1. 列出 `research/inbox/` 中所有文件
+  2. 逐篇快筛 → 分析 → 存档
+  3. 🟢材料分析完成后，原文移动到 `research/materials/对应分类/`
+  4. 🟡🔴材料原文保留在 inbox/（用户可自行清理）
+  5. 记录到 processed.md
+
+### 渠道3：直接粘贴（对话中）
+- 用户直接在对话中粘贴文字内容，这是最常用的方式
+- 处理流程：
+  1. 执行标准快筛 + 分析流程
+  2. **🟢材料自动存档**：将粘贴的原文保存到 `research/materials/对应分类/YYYYMMDD-关键词-原文.md`
+  3. 分析结果保存到 `research/analysis/`
+  4. 记录到 processed.md
+- 这样确保粘贴的材料也留痕，未来可回溯原文
 
 ### 历史回溯流程（替代 conversation_search）
 
@@ -73,7 +103,8 @@ acecamp-articles/ → 软链接到爬虫仓库的 articles/ 目录（AceCamp抓�
 
 **第四步：搜索原始材料**
 如果前三步未找到，用 Grep 在以下目录搜索原始材料内容：
-- `research/materials/` — 手动存放的原始材料
+- `research/materials/` — 已归档的原始材料
+- `research/inbox/` — 待处理的收件箱材料
 - `acecamp-articles/` — AceCamp 爬虫自动抓取的文章
 
 只有四步都完成、仍然没有找到，才可以说"历史记录里没有相关讨论"。
@@ -168,9 +199,11 @@ acecamp-articles/ → 软链接到爬虫仓库的 articles/ 目录（AceCamp抓�
 
 1. **更新索引** — 将标准索引条目追加到 `research/knowledge_base/index.md`
 2. **保存分析** — 将完整分析保存到 `research/analysis/YYYYMMDD-X-关键词.md`
-3. **更新汇总** — 如有增量/挑战/修正，更新 `research/knowledge_base/summary.md` 相关板块
-4. **更新核心假设** — 如有核心变量被挑战，更新 `research/knowledge_base/core_assumptions.md`
-5. **更新持仓** — 如有投资建议变化，提示用户是否更新 `research/knowledge_base/portfolio.md`
+3. **存档原文** — 粘贴的材料保存到 `research/materials/对应分类/`；inbox材料移动到对应分类
+4. **记录处理** — 在 `research/knowledge_base/processed.md` 追加记录（含🟡🔴材料）
+5. **更新汇总** — 如有增量/挑战/修正，更新 `research/knowledge_base/summary.md` 相关板块
+6. **更新核心假设** — 如有核心变量被挑战，更新 `research/knowledge_base/core_assumptions.md`
+7. **更新持仓** — 如有投资建议变化，提示用户是否更新 `research/knowledge_base/portfolio.md`
 
 ---
 
