@@ -487,14 +487,16 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
         logger.error(f"加载失败: {url} - {e}")
         return None
 
-    # 对纪要文章，尝试点击中文语言切换（浏览器 locale 已设为 zh-CN，但部分页面可能需要手动切换）
+    # 对纪要文章，等待 VIP 内容渲染，并尝试切换到中文
     if '/article/detail/' in url:
+        # 额外等待确保 SPA 内容渲染完成
+        page.wait_for_timeout(3000)
         try:
             for cn_text in ['Chinese', '中文', '原文']:
                 el = page.query_selector(f'text="{cn_text}"')
                 if el and el.is_visible():
                     el.click()
-                    page.wait_for_timeout(1500)
+                    page.wait_for_timeout(3000)
                     logger.info(f"已点击 '{cn_text}' 切换到中文")
                     break
         except Exception:
@@ -532,38 +534,40 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
         except Exception:
             continue
 
-    # 获取正文 HTML
+    # 获取正文：优先用 HTML 选择器，否则用纯文本
     content_html = ""
     for sel in ['article', '.article-content', '.post-content',
                 '[class*="article-body"]', '[class*="post-body"]',
-                '[class*="content"]', '.entry-content', 'main', '.main-content']:
+                '.entry-content']:
         try:
             el = page.query_selector(sel)
             if el:
                 html = el.inner_html()
-                if len(html) > 200:
+                if len(html) > 500:
                     content_html = html
                     break
         except Exception:
             continue
 
-    if not content_html:
+    if content_html:
+        # HTML 模式：清理并转换为 Markdown
+        soup = BeautifulSoup(content_html, "html.parser")
+        for tag in soup.find_all(['script', 'style', 'nav', 'header', 'footer', 'iframe', 'noscript']):
+            tag.decompose()
+        for img in soup.find_all('img'):
+            src = img.get('src', '')
+            if src and not src.startswith(('http://', 'https://', 'data:')):
+                img['src'] = urljoin(base_url, src)
+        content_md = md(str(soup), heading_style="ATX", bullets="-")
+    else:
+        # 纯文本模式：SPA 页面无法匹配标准 HTML 选择器，直接提取纯文本
         try:
-            content_html = page.query_selector("body").inner_html()
+            content_md = page.inner_text("body") or ""
+            logger.info(f"使用纯文本模式提取内容 ({len(content_md)} 字符)")
         except Exception:
             logger.warning(f"无法获取文章内容: {url}")
             return None
 
-    # 清理并转换为 Markdown
-    soup = BeautifulSoup(content_html, "html.parser")
-    for tag in soup.find_all(['script', 'style', 'nav', 'header', 'footer', 'iframe', 'noscript']):
-        tag.decompose()
-    for img in soup.find_all('img'):
-        src = img.get('src', '')
-        if src and not src.startswith(('http://', 'https://', 'data:')):
-            img['src'] = urljoin(base_url, src)
-
-    content_md = md(str(soup), heading_style="ATX", bullets="-")
     content_md = re.sub(r'\n{3,}', '\n\n', content_md)
 
     # 清理文末无效内容：免责声明、评论区、推荐文章、页脚等
@@ -585,33 +589,57 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
         'AceCampTech\n\nCorporate Address',
         'Copyright©',
         '京ICP备',
+        '\n智能追问\n',
+        '\n专家简介',
+        '\n预约专家1对1访谈\n',
+        '\n评论\n',
+        '\n已发布',
+        '\n为你推荐\n',
+        '\n下载APP\n',
     ]
     for marker in cleanup_markers:
         idx = content_md.find(marker)
         if idx > 0:
             content_md = content_md[:idx].rstrip()
 
-    # 清理文章开头的重复标题和导航信息
-    # 去掉 "Expert 1-on-1\n\nChinese\n\nEN\n\nThe original version is in Chinese FYI" 等
-    content_md = re.sub(
-        r'^.*?(?:Expert 1-on-1|Industry Expert|Independent Research)\n+(?:Chinese\n+EN\n+)?(?:The original version is in Chinese FYI\n+)?',
-        '', content_md, count=1, flags=re.DOTALL
-    )
-    # 去掉 VIP/Original/Industry 信息行和 Views/Likes 行
-    content_md = re.sub(r'^VIP.*?Industry[：:].+\n+', '', content_md, flags=re.MULTILINE)
+    # 清理文章开头的导航和元数据（纯文本模式下会包含整个页面的文本）
+    # 纪要文章：查找正文起始标记
+    content_start_markers = [
+        '以下为专家观点：', '以下为专家观点',
+        '已享VIP免费\n', 'VIP Free\n',
+        'Below are expert opinions',
+    ]
+    for marker in content_start_markers:
+        idx = content_md.find(marker)
+        if idx > 0:
+            content_md = content_md[idx + len(marker):].strip()
+            break
+    else:
+        # 如果没找到特定标记，尝试去掉导航栏头部（从"首页"到标题之后的元数据）
+        content_md = re.sub(
+            r'^.*?(?:预约专家1对1访谈|Expert 1-on-1|行业专家|独立研究|Industry Expert|Independent Research)\n+(?:中文\n+EN\n+)?(?:The original version is in Chinese FYI\n+)?',
+            '', content_md, count=1, flags=re.DOTALL
+        )
+
+    # 去掉 VIP/行业 信息行和 阅读/点赞 行
+    content_md = re.sub(r'^VIP.*?[行I].*?[：:].+\n+', '', content_md, flags=re.MULTILINE)
     content_md = re.sub(r'^\d{4}/\d{2}/\d{2}\s+\d{2}:\d{2}:\d{2}\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^阅读\s+\d+\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^点赞\s+\d+\n+', '', content_md, flags=re.MULTILINE)
     content_md = re.sub(r'^Views\s+\d+\n+', '', content_md, flags=re.MULTILINE)
     content_md = re.sub(r'^Likes\s+\d+\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^AI 速览.*?\n+', '', content_md, flags=re.MULTILINE)
     content_md = re.sub(r'^Quick-Q\n+', '', content_md, flags=re.MULTILINE)
-    # 去掉观点文章开头的 "X Followers/Follow" 等
-    content_md = re.sub(r'^\d+\s+Followers?Follow\n+', '', content_md, flags=re.MULTILINE)
-    content_md = re.sub(r'^Industry[：:].+\n+', '', content_md, flags=re.MULTILINE)
-    content_md = re.sub(r'^Creation time[：:].+\n+', '', content_md, flags=re.MULTILINE)
-    content_md = re.sub(r'^Update time[：:].+\n+', '', content_md, flags=re.MULTILINE)
-    content_md = re.sub(r'^\d+[\.\d]*[WwKk]?\+?\s*Views?\|?\d*\s*Favorites?\n+', '', content_md, flags=re.MULTILINE)
-    # 清理尾部的 Share/Favorite/Fold 等按钮文本
-    content_md = re.sub(r'\n+\d+\n+\d+\n+Share\n+Favorite\s*$', '', content_md)
-    content_md = re.sub(r'\n+Fold\s*$', '', content_md)
+    # 去掉观点文章开头的元数据
+    content_md = re.sub(r'^\d+\s+(?:Followers?|关注者)(?:Follow|关注)\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^(?:Industry|行业)[：:].+\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^(?:Creation time|创建时间)[：:].+\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^(?:Update time|更新时间)[：:].+\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^\d+[\.\d]*[WwKk万]?\+?\s*(?:Views?|阅读)\|?\d*\s*(?:Favorites?|收藏)\n+', '', content_md, flags=re.MULTILINE)
+    # 清理尾部的按钮文本
+    content_md = re.sub(r'\n+\d+\n+(?:差评|好评)\n+\d+\n+分享\s*$', '', content_md)
+    content_md = re.sub(r'\n+\d+\n+\d+\n+(?:Share|分享)\n+(?:Favorite|收藏)\s*$', '', content_md)
+    content_md = re.sub(r'\n+(?:Fold|收起)\s*$', '', content_md)
 
     content_md = re.sub(r'\n{3,}', '\n\n', content_md).strip()
 
