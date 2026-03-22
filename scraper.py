@@ -18,6 +18,9 @@ import os
 import re
 import logging
 import hashlib
+import shutil
+import random
+import time
 from datetime import datetime, timezone, timedelta
 from urllib.parse import urljoin, urlparse
 
@@ -411,6 +414,11 @@ def discover_articles(page, base_url: str, logger: logging.Logger) -> list[dict]
 
                 if full_url in seen_urls:
                     continue
+
+                # 只保留纪要和观点文章
+                if '/article/detail/' not in full_url and '/viewpoint/detail/' not in full_url:
+                    continue
+
                 seen_urls.add(full_url)
 
                 title = (el.inner_text() or "").strip()
@@ -466,7 +474,8 @@ def scroll_to_load_all(page, logger: logging.Logger, max_scrolls: int = 20):
 # 文章内容抓取
 # ============================================================
 
-def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger) -> dict | None:
+def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger,
+                           fallback_title: str = "") -> dict | None:
     """抓取单篇文章内容，返回结构化数据"""
     try:
         page.goto(url, wait_until="networkidle", timeout=30000)
@@ -544,18 +553,55 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
     content_md = md(str(soup), heading_style="ATX", bullets="-")
     content_md = re.sub(r'\n{3,}', '\n\n', content_md)
 
-    # 获取分类
-    category = "未分类"
-    for sel in ['[class*="category"] a', '[class*="breadcrumb"] a', '.tag a', '[class*="label"]']:
+    # 通用标题列表（页面未渲染真实标题时的占位符）
+    generic_titles = {"article details", "insight details", "insights", "untitled", ""}
+
+    # 如果标题是通用的，尝试从正文提取真实标题
+    if title.lower() in generic_titles:
+        lines = content_md.strip().split('\n')
+        for line in lines:
+            line = line.strip().lstrip('#').strip()
+            if line and len(line) >= 4 and line.lower() not in generic_titles:
+                title = line[:200]
+                break
+
+    # 如果仍然是通用标题，使用搜索页发现的标题作为后备
+    if title.lower() in generic_titles and fallback_title:
+        # 清理 fallback_title（搜索页的标题可能包含序号前缀如 "5.\n"）
+        clean_fallback = re.sub(r'^\d+\.\s*', '', fallback_title).strip()
+        # 去掉多行，只取第一行有意义的部分
+        first_line = clean_fallback.split('\n')[0].strip()
+        if first_line and first_line.lower() not in generic_titles:
+            title = first_line
+
+    # 根据 URL 判断分类
+    if '/viewpoint/detail/' in url:
+        category = "观点"
+        # 去掉观点标题前的情绪标签
+        sentiment_labels = ["Cautious", "Neutral", "Positive", "Negative", "Bullish", "Bearish"]
+        for label in sentiment_labels:
+            if title.startswith(label):
+                title = title[len(label):].strip()
+                break
+    elif '/article/detail/' in url:
+        # 检查是否为共享纪要：页面中是否包含 "Shared Transcript" / "共享" 标记
+        is_shared = False
         try:
-            el = page.query_selector(sel)
-            if el:
-                cat_text = (el.inner_text() or "").strip()
-                if cat_text and len(cat_text) < 30:
-                    category = cat_text
-                    break
+            page_text = page.inner_text("body")
+            if "Shared Transcript" in page_text or "共享纪要" in page_text:
+                is_shared = True
         except Exception:
-            continue
+            pass
+        if not is_shared:
+            try:
+                shared_el = page.query_selector('a:has-text("Shared Transcript"), a:has-text("共享")')
+                if shared_el:
+                    is_shared = True
+            except Exception:
+                pass
+        category = "共享纪要" if is_shared else "本营纪要"
+    else:
+        category = "未分类"
 
     return {
         "title": title,
@@ -566,20 +612,71 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
     }
 
 
-def save_article_as_markdown(article: dict, output_dir: str, logger: logging.Logger) -> str:
-    """保存文章为 Markdown 文件，按分类创建子目录"""
-    category_dir = os.path.join(output_dir, sanitize_filename(article["category"]))
-    os.makedirs(category_dir, exist_ok=True)
+# AI 相关关键词（用于筛选 AI 行业文章）
+# 需要词边界匹配的短关键词（防止误匹配）
+AI_KEYWORDS_WORD_BOUNDARY = [
+    'AI', 'GPU', 'LLM', 'GPT', 'HBM', 'NVL', 'CPO', 'CUDA',
+]
+# 较长关键词直接子串匹配即可
+AI_KEYWORDS_SUBSTRING = [
+    '人工智能', '大模型', '算力', 'NVIDIA', '英伟达', 'Ascend', '昇腾',
+    '寒武纪', 'Cambricon', 'DeepSeek', 'OpenAI', 'NVLink',
+    '机器学习', '深度学习', 'Transformer', '光互联',
+    '数据中心', 'data center', '智算', '算力芯片',
+    'Hygon', '海光', 'inference', '推理训练',
+    'ChatGPT', 'Claude', 'Anthropic', '大语言模型',
+]
 
-    filename = sanitize_filename(article["title"]) + ".md"
-    filepath = os.path.join(category_dir, filename)
+
+def extract_date_from_str(date_str: str) -> str:
+    """从日期字符串中提取 YYYY-MM-DD 格式的日期"""
+    if not date_str:
+        return datetime.now(JST).strftime("%Y-%m-%d")
+    # 匹配 YYYY/MM/DD 或 YYYY-MM-DD
+    m = re.search(r'(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})', date_str)
+    if m:
+        return f"{m.group(1)}-{m.group(2).zfill(2)}-{m.group(3).zfill(2)}"
+    return datetime.now(JST).strftime("%Y-%m-%d")
+
+
+def is_ai_related(title: str, content: str) -> bool:
+    """检查文章标题是否与 AI 相关（仅检查标题，避免误匹配）"""
+    # 主要检查标题（更精确），辅助检查内容开头
+    title_lower = title.lower()
+    text = (title + " " + content[:1500]).lower()
+
+    # 短关键词需要词边界匹配
+    for kw in AI_KEYWORDS_WORD_BOUNDARY:
+        if re.search(r'\b' + re.escape(kw.lower()) + r'\b', text):
+            return True
+
+    # 长关键词子串匹配
+    for kw in AI_KEYWORDS_SUBSTRING:
+        if kw.lower() in text:
+            return True
+
+    return False
+
+
+def save_article_as_markdown(article: dict, output_dir: str, logger: logging.Logger) -> str:
+    """保存文章为 Markdown 文件，文件名格式：【分类】日期_标题.md"""
+    os.makedirs(output_dir, exist_ok=True)
+
+    category = article["category"]  # 共享纪要 / 本营纪要 / 观点
+    date_str = extract_date_from_str(article.get("date", ""))
+    title_part = sanitize_filename(article["title"])
+
+    # 使用 URL 末尾的 ID 确保文件名唯一
+    url_id = article["url"].rstrip("/").split("/")[-1]
+    filename = f"【{category}】{date_str}_{title_part}_{url_id}.md"
+    filepath = os.path.join(output_dir, filename)
 
     now_jst = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S JST")
 
     md_content = f"""---
 title: "{article['title']}"
 source: "{article['url']}"
-category: "{article['category']}"
+category: "{category}"
 date: "{article.get('date', '')}"
 downloaded: "{now_jst}"
 ---
@@ -593,6 +690,15 @@ downloaded: "{now_jst}"
         f.write(md_content)
 
     logger.info(f"已保存: {filepath}")
+
+    # AI 相关文章额外复制到 AI industry 文件夹
+    if is_ai_related(article["title"], article.get("content_md", "")):
+        ai_dir = os.path.join(output_dir, "AI industry")
+        os.makedirs(ai_dir, exist_ok=True)
+        ai_filepath = os.path.join(ai_dir, filename)
+        shutil.copy2(filepath, ai_filepath)
+        logger.info(f"AI相关文章已复制到: {ai_filepath}")
+
     return filepath
 
 
@@ -759,7 +865,7 @@ def main():
             browser.close()
             return
 
-        # 第2步：逐篇抓取
+        # 第2步：逐篇抓取（加入随机延迟，防止触发反爬机制）
         for i, art_info in enumerate(articles):
             aid = article_id(art_info["url"])
 
@@ -768,8 +874,17 @@ def main():
                 logger.info(f"[{i+1}/{len(articles)}] 跳过已下载: {art_info['title']}")
                 continue
 
+            # 随机延迟，避免触发反频繁点击机制
+            if i > 0:
+                delay_min = config.get("scrape_delay_min", 3)
+                delay_max = config.get("scrape_delay_max", 8)
+                delay = random.uniform(delay_min, delay_max)
+                logger.info(f"等待 {delay:.1f} 秒...")
+                time.sleep(delay)
+
             logger.info(f"[{i+1}/{len(articles)}] 正在抓取: {art_info['title']}")
-            article = scrape_article_content(page, art_info["url"], base_url, logger)
+            article = scrape_article_content(page, art_info["url"], base_url, logger,
+                                             fallback_title=art_info.get("title", ""))
             if not article:
                 logger.warning(f"抓取失败，跳过: {art_info['url']}")
                 continue
