@@ -37,7 +37,13 @@ research/
 ├── analysis/                 # 每份材料的分析输出
 │   └── YYYYMMDD-信源标记-关键词.md
 └── archive/                  # 已过时/不再跟踪的内容
+
+acecamp-articles/ → 软链接到爬虫仓库的 articles/ 目录（AceCamp抓取的文章）
 ```
+
+### AceCamp 文章接入
+`acecamp-articles/` 是指向独立爬虫仓库（AI-Research-Scraper）articles 目录的软链接。
+分析材料时也应搜索此目录。搜索原始材料时同时覆盖 `research/materials/` 和 `acecamp-articles/`。
 
 ### 历史回溯流程（替代 conversation_search）
 
@@ -66,7 +72,9 @@ research/
 - "潍柴重机" → 同时搜 "柴发"、"发电机"、"数据中心备用电源"、"康明斯"、"燃气轮机"
 
 **第四步：搜索原始材料**
-如果前三步未找到，用 Grep 在 research/materials/ 目录下搜索原始材料内容。
+如果前三步未找到，用 Grep 在以下目录搜索原始材料内容：
+- `research/materials/` — 手动存放的原始材料
+- `acecamp-articles/` — AceCamp 爬虫自动抓取的文章
 
 只有四步都完成、仍然没有找到，才可以说"历史记录里没有相关讨论"。
 

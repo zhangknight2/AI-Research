@@ -1,9 +1,6 @@
 # 凭据
 .env
 
-# 下载的文章（按需决定是否提交）
-# articles/
-
 # 运行数据
 data/
 logs/
@@ -17,3 +14,6 @@ venv/
 
 # 研究项目 - 原始材料不提交（可能含敏感信息）
 research/materials/
+
+# AceCamp 文章软链接（指向独立爬虫仓库）
+acecamp-articles
