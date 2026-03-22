@@ -3,6 +3,11 @@ base_url: "https://www.acecamptech.com"
 search_url: "https://www.acecamptech.com/search"
 login_url: "https://www.acecamptech.com/login"
 
+# 分类页 URL（直接从对应标签页抓取）
+category_urls:
+  纪要: "https://www.acecamptech.com/search?type=minutes"
+  观点: "https://www.acecamptech.com/search?type=articles"
+
 # 文章保存目录
 output_dir: "articles"
 

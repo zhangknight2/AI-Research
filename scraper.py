@@ -103,11 +103,11 @@ def article_id(url: str) -> str:
 
 
 def sanitize_filename(name: str) -> str:
-    """将标题转换为安全的文件名"""
+    """将标题转换为安全的文件名（限制60字符，避免文件名过长）"""
     name = re.sub(r'[<>:"/\\|?*]', '', name)
     name = name.strip()
-    if len(name) > 100:
-        name = name[:100]
+    if len(name) > 60:
+        name = name[:60]
     return name or "untitled"
 
 
@@ -415,8 +415,8 @@ def discover_articles(page, base_url: str, logger: logging.Logger) -> list[dict]
                 if full_url in seen_urls:
                     continue
 
-                # 只保留纪要和观点文章
-                if '/article/detail/' not in full_url and '/viewpoint/detail/' not in full_url:
+                # 只保留文章详情页（排除非文章链接如导航、广告等）
+                if '/detail/' not in full_url:
                     continue
 
                 seen_urls.add(full_url)
@@ -475,8 +475,8 @@ def scroll_to_load_all(page, logger: logging.Logger, max_scrolls: int = 20):
 # ============================================================
 
 def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger,
-                           fallback_title: str = "") -> dict | None:
-    """抓取单篇文章内容，返回结构化数据"""
+                           fallback_title: str = "", source_category: str = "") -> dict | None:
+    """抓取单篇文章内容，返回结构化数据。source_category 是从标签页传入的分类（纪要/观点）"""
     try:
         page.goto(url, wait_until="networkidle", timeout=30000)
         page.wait_for_timeout(2000)
@@ -486,6 +486,19 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
     except Exception as e:
         logger.error(f"加载失败: {url} - {e}")
         return None
+
+    # 对纪要文章，尝试点击中文语言切换（浏览器 locale 已设为 zh-CN，但部分页面可能需要手动切换）
+    if '/article/detail/' in url:
+        try:
+            for cn_text in ['Chinese', '中文', '原文']:
+                el = page.query_selector(f'text="{cn_text}"')
+                if el and el.is_visible():
+                    el.click()
+                    page.wait_for_timeout(1500)
+                    logger.info(f"已点击 '{cn_text}' 切换到中文")
+                    break
+        except Exception:
+            pass
 
     # 获取标题
     title = ""
@@ -553,8 +566,58 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
     content_md = md(str(soup), heading_style="ATX", bullets="-")
     content_md = re.sub(r'\n{3,}', '\n\n', content_md)
 
+    # 清理文末无效内容：免责声明、评论区、推荐文章、页脚等
+    cleanup_markers = [
+        'Solemn statement:',
+        '郑重声明：',
+        '免责声明',
+        '投资有风险',
+        '仅供参考',
+        '风险提示',
+        '\nComments\n',
+        '\nPublished\n',
+        '\nNo Data\n',
+        '\nFor You\n',
+        '\nAPP Download\n',
+        'APP Download',
+        'Android & iOS',
+        'WeChat Official Account',
+        'AceCampTech\n\nCorporate Address',
+        'Copyright©',
+        '京ICP备',
+    ]
+    for marker in cleanup_markers:
+        idx = content_md.find(marker)
+        if idx > 0:
+            content_md = content_md[:idx].rstrip()
+
+    # 清理文章开头的重复标题和导航信息
+    # 去掉 "Expert 1-on-1\n\nChinese\n\nEN\n\nThe original version is in Chinese FYI" 等
+    content_md = re.sub(
+        r'^.*?(?:Expert 1-on-1|Industry Expert|Independent Research)\n+(?:Chinese\n+EN\n+)?(?:The original version is in Chinese FYI\n+)?',
+        '', content_md, count=1, flags=re.DOTALL
+    )
+    # 去掉 VIP/Original/Industry 信息行和 Views/Likes 行
+    content_md = re.sub(r'^VIP.*?Industry[：:].+\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^\d{4}/\d{2}/\d{2}\s+\d{2}:\d{2}:\d{2}\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^Views\s+\d+\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^Likes\s+\d+\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^Quick-Q\n+', '', content_md, flags=re.MULTILINE)
+    # 去掉观点文章开头的 "X Followers/Follow" 等
+    content_md = re.sub(r'^\d+\s+Followers?Follow\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^Industry[：:].+\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^Creation time[：:].+\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^Update time[：:].+\n+', '', content_md, flags=re.MULTILINE)
+    content_md = re.sub(r'^\d+[\.\d]*[WwKk]?\+?\s*Views?\|?\d*\s*Favorites?\n+', '', content_md, flags=re.MULTILINE)
+    # 清理尾部的 Share/Favorite/Fold 等按钮文本
+    content_md = re.sub(r'\n+\d+\n+\d+\n+Share\n+Favorite\s*$', '', content_md)
+    content_md = re.sub(r'\n+Fold\s*$', '', content_md)
+
+    content_md = re.sub(r'\n{3,}', '\n\n', content_md).strip()
+
     # 通用标题列表（页面未渲染真实标题时的占位符）
-    generic_titles = {"article details", "insight details", "insights", "untitled", ""}
+    generic_titles = {"article details", "insight details", "insights", "untitled", "",
+                      "文章详情", "观点详情", "纪要详情", "详情"}
 
     # 如果标题是通用的，尝试从正文提取真实标题
     if title.lower() in generic_titles:
@@ -574,16 +637,17 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
         if first_line and first_line.lower() not in generic_titles:
             title = first_line
 
-    # 根据 URL 判断分类
-    if '/viewpoint/detail/' in url:
+    # 根据标签页来源分类（优先），或根据 URL 判断
+    if source_category == "观点" or '/viewpoint/detail/' in url:
         category = "观点"
         # 去掉观点标题前的情绪标签
-        sentiment_labels = ["Cautious", "Neutral", "Positive", "Negative", "Bullish", "Bearish"]
+        sentiment_labels = ["Cautious", "Neutral", "Positive", "Negative", "Bullish", "Bearish",
+                           "谨慎", "中性", "正面", "负面", "看多", "看空"]
         for label in sentiment_labels:
             if title.startswith(label):
                 title = title[len(label):].strip()
                 break
-    elif '/article/detail/' in url:
+    elif source_category == "纪要" or '/article/detail/' in url:
         # 检查是否为共享纪要：页面中是否包含 "Shared Transcript" / "共享" 标记
         is_shared = False
         try:
@@ -707,40 +771,39 @@ downloaded: "{now_jst}"
 # ============================================================
 
 def run_discovery(page, config: dict, logger: logging.Logger) -> list[dict]:
-    """访问搜索页面，发现所有文章链接"""
-    search_url = config["search_url"]
+    """分别访问纪要和观点标签页，发现文章链接"""
     base_url = config["base_url"]
     browser_cfg = config.get("browser", {})
+    category_urls = config.get("category_urls", {
+        "纪要": f"{base_url}/search?type=minutes",
+        "观点": f"{base_url}/search?type=articles",
+    })
 
-    logger.info(f"正在访问搜索页面: {search_url}")
-    try:
-        page.goto(search_url, wait_until="networkidle",
-                  timeout=browser_cfg.get("timeout", 30000))
-        page.wait_for_timeout(browser_cfg.get("wait_after_load", 3000))
-    except PlaywrightTimeout:
-        logger.warning("搜索页面加载超时，继续尝试...")
+    all_articles = []
+    seen_urls = set()
 
-    scroll_to_load_all(page, logger)
-    categories = discover_categories(page, base_url, logger)
-    articles = discover_articles(page, base_url, logger)
+    for category_name, category_url in category_urls.items():
+        logger.info(f"正在访问【{category_name}】标签页: {category_url}")
+        try:
+            page.goto(category_url, wait_until="networkidle",
+                      timeout=browser_cfg.get("timeout", 30000))
+            page.wait_for_timeout(browser_cfg.get("wait_after_load", 3000))
+        except PlaywrightTimeout:
+            logger.warning(f"【{category_name}】页面加载超时，继续尝试...")
 
-    # 如果搜索页面文章较少，从分类页获取
-    if len(articles) < 5 and categories:
-        logger.info("搜索页面文章较少，尝试从分类页面获取...")
-        for cat in categories:
-            try:
-                page.goto(cat["url"], wait_until="networkidle", timeout=30000)
-                page.wait_for_timeout(2000)
-                scroll_to_load_all(page, logger, max_scrolls=10)
-                cat_articles = discover_articles(page, base_url, logger)
-                for art in cat_articles:
-                    art["category"] = cat["name"]
-                    if art["url"] not in [a["url"] for a in articles]:
-                        articles.append(art)
-            except Exception as e:
-                logger.warning(f"访问分类页面失败: {cat['url']} - {e}")
+        scroll_to_load_all(page, logger)
+        articles = discover_articles(page, base_url, logger)
 
-    return articles
+        # 给每篇文章标记来源分类
+        for art in articles:
+            if art["url"] not in seen_urls:
+                art["category"] = category_name
+                all_articles.append(art)
+                seen_urls.add(art["url"])
+
+        logger.info(f"【{category_name}】发现 {len(articles)} 篇文章")
+
+    return all_articles
 
 
 def save_debug_snapshot(page, logger: logging.Logger):
@@ -826,6 +889,7 @@ def main():
         context = browser.new_context(
             viewport={"width": 1280, "height": 800},
             ignore_https_errors=True,
+            locale="zh-CN",
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -884,7 +948,8 @@ def main():
 
             logger.info(f"[{i+1}/{len(articles)}] 正在抓取: {art_info['title']}")
             article = scrape_article_content(page, art_info["url"], base_url, logger,
-                                             fallback_title=art_info.get("title", ""))
+                                             fallback_title=art_info.get("title", ""),
+                                             source_category=art_info.get("category", ""))
             if not article:
                 logger.warning(f"抓取失败，跳过: {art_info['url']}")
                 continue
