@@ -602,40 +602,7 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
 
     content_md = re.sub(r'\n{3,}', '\n\n', content_md)
 
-    # 清理文末无效内容：免责声明、评论区、推荐文章、页脚等
-    cleanup_markers = [
-        'Solemn statement:',
-        '郑重声明：',
-        '免责声明',
-        '投资有风险',
-        '仅供参考',
-        '风险提示',
-        '\nComments\n',
-        '\nPublished\n',
-        '\nNo Data\n',
-        '\nFor You\n',
-        '\nAPP Download\n',
-        'APP Download',
-        'Android & iOS',
-        'WeChat Official Account',
-        'AceCampTech\n\nCorporate Address',
-        'Copyright©',
-        '京ICP备',
-        '\n智能追问\n',
-        '\n专家简介',
-        '\n预约专家1对1访谈\n',
-        '\n评论\n',
-        '\n已发布',
-        '\n为你推荐\n',
-        '\n下载APP\n',
-    ]
-    for marker in cleanup_markers:
-        idx = content_md.find(marker)
-        if idx > 0:
-            content_md = content_md[:idx].rstrip()
-
-    # 清理文章开头的导航和元数据（纯文本模式下会包含整个页面的文本）
-    # 纪要文章：查找正文起始标记
+    # ====== 第1步：先截头 —— 去掉导航栏和头部元数据，找到正文起始点 ======
     content_start_markers = [
         '以下为专家观点：', '以下为专家观点',
         '已享VIP免费\n', 'VIP Free\n',
@@ -668,6 +635,39 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
     content_md = re.sub(r'^(?:Creation time|创建时间)[：:].+\n+', '', content_md, flags=re.MULTILINE)
     content_md = re.sub(r'^(?:Update time|更新时间)[：:].+\n+', '', content_md, flags=re.MULTILINE)
     content_md = re.sub(r'^\d+[\.\d]*[WwKk万]?\+?\s*(?:Views?|阅读)\|?\d*\s*(?:Favorites?|收藏)\n+', '', content_md, flags=re.MULTILINE)
+
+    # ====== 第2步：再截尾 —— 去掉免责声明、评论区、推荐文章、页脚等 ======
+    cleanup_markers = [
+        'Solemn statement:',
+        '郑重声明：',
+        '免责声明',
+        '投资有风险',
+        '仅供参考',
+        '风险提示',
+        '\nComments\n',
+        '\nPublished\n',
+        '\nNo Data\n',
+        '\nFor You\n',
+        '\nAPP Download\n',
+        'APP Download',
+        'Android & iOS',
+        'WeChat Official Account',
+        'AceCampTech\n\nCorporate Address',
+        'Copyright©',
+        '京ICP备',
+        '\n智能追问\n',
+        '\n专家简介',
+        '\n预约专家1对1访谈\n',
+        '\n评论\n',
+        '\n已发布',
+        '\n为你推荐\n',
+        '\n下载APP\n',
+    ]
+    for marker in cleanup_markers:
+        idx = content_md.find(marker)
+        if idx > 0:
+            content_md = content_md[:idx].rstrip()
+
     # 清理尾部的按钮文本
     content_md = re.sub(r'\n+\d+\n+(?:差评|好评)\n+\d+\n+分享\s*$', '', content_md)
     content_md = re.sub(r'\n+\d+\n+\d+\n+(?:Share|分享)\n+(?:Favorite|收藏)\s*$', '', content_md)
