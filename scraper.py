@@ -479,18 +479,50 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
     """抓取单篇文章内容，返回结构化数据。source_category 是从标签页传入的分类（纪要/观点）"""
     try:
         page.goto(url, wait_until="networkidle", timeout=30000)
-        page.wait_for_timeout(2000)
+        page.wait_for_timeout(3000)
     except PlaywrightTimeout:
         logger.warning(f"加载超时: {url}")
-        return None
+        # 超时后仍继续尝试提取内容
     except Exception as e:
         logger.error(f"加载失败: {url} - {e}")
+        return None
+
+    # 等待文章内容渲染（SPA 页面可能需要额外时间）
+    for attempt in range(8):
+        body_text = page.inner_text("body") or ""
+        # 检测反爬频率限制
+        if "操作过于频繁" in body_text or "休息一下" in body_text:
+            logger.warning(f"触发频率限制！等待 60 秒后重试... (第 {attempt+1} 次)")
+            # 尝试点击认证按钮
+            try:
+                auth_btn = page.query_selector('text="点击认证"')
+                if auth_btn:
+                    auth_btn.click()
+                    page.wait_for_timeout(3000)
+            except Exception:
+                pass
+            page.wait_for_timeout(60000)
+            try:
+                page.goto(url, wait_until="networkidle", timeout=30000)
+                page.wait_for_timeout(3000)
+            except PlaywrightTimeout:
+                pass
+            continue
+        if len(body_text) > 500:
+            break
+        page.wait_for_timeout(2000)
+    else:
+        logger.warning(f"文章内容未渲染: {url} (body仅 {len(body_text)} 字符)")
+        debug_dir = "debug"
+        os.makedirs(debug_dir, exist_ok=True)
+        aid = url.rstrip("/").split("/")[-1]
+        page.screenshot(path=f"{debug_dir}/fail_{aid}.png", full_page=True)
         return None
 
     # 对纪要文章，等待 VIP 内容渲染，并尝试切换到中文
     if '/article/detail/' in url:
         # 额外等待确保 SPA 内容渲染完成
-        page.wait_for_timeout(3000)
+        page.wait_for_timeout(2000)
         try:
             for cn_text in ['Chinese', '中文', '原文']:
                 el = page.query_selector(f'text="{cn_text}"')
@@ -757,6 +789,9 @@ def save_article_as_markdown(article: dict, output_dir: str, logger: logging.Log
     category = article["category"]  # 共享纪要 / 本营纪要 / 观点
     date_str = extract_date_from_str(article.get("date", ""))
     title_part = sanitize_filename(article["title"])
+    # 截断标题，防止文件名过长（GitHub 有路径长度限制）
+    if len(title_part) > 50:
+        title_part = title_part[:50]
 
     # 使用 URL 末尾的 ID 确保文件名唯一
     url_id = article["url"].rstrip("/").split("/")[-1]

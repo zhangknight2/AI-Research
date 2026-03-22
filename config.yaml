@@ -21,8 +21,8 @@ browser:
   wait_after_load: 3000  # 页面加载后等待时间 (ms)，确保SPA渲染完成
 
 # 请求间隔（秒），防止触发反爬机制
-scrape_delay_min: 3
-scrape_delay_max: 8
+scrape_delay_min: 8
+scrape_delay_max: 15
 
 # 日志
 log_file: "logs/scraper.log"
