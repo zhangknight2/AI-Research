@@ -131,14 +131,53 @@ def do_login(page, config: dict, env: dict, logger: logging.Logger) -> bool:
     logger.info(f"正在登录: {login_url}")
 
     try:
-        page.goto(login_url, wait_until="networkidle", timeout=30000)
-        page.wait_for_timeout(2000)
+        page.goto(login_url, wait_until="domcontentloaded", timeout=30000)
     except PlaywrightTimeout:
         logger.warning("登录页面加载超时，继续尝试...")
+    except Exception as e:
+        logger.warning(f"登录页面加载异常: {e}，尝试重新加载...")
+        try:
+            page.goto(login_url, wait_until="commit", timeout=30000)
+        except Exception as e2:
+            logger.error(f"重试加载登录页面仍然失败: {e2}")
+            return False
+
+    # SPA 需要等待 JS 渲染完成，等待输入框出现
+    logger.info("等待登录表单渲染...")
+    try:
+        page.wait_for_selector(
+            'input[type="text"], input[type="email"], input[type="password"], input[name="username"], input[name="account"]',
+            timeout=15000
+        )
+        logger.info("登录表单已出现")
+    except PlaywrightTimeout:
+        logger.warning("等待登录表单超时，继续尝试...")
+        page.wait_for_timeout(5000)
 
     # 保存登录页截图用于调试
     os.makedirs("debug", exist_ok=True)
     page.screenshot(path="debug/login_page.png", full_page=True)
+
+    # 如果默认是验证码登录模式，先切换到密码登录
+    password_mode_selectors = [
+        'div.link:has-text("Login via password")',
+        'div.link:has-text("密码登录")',
+        ':text("Login via password")',
+        ':text("密码登录")',
+        'a:has-text("Login via password")',
+        'a:has-text("密码登录")',
+    ]
+    for sel in password_mode_selectors:
+        try:
+            el = page.query_selector(sel)
+            if el and el.is_visible():
+                el.click()
+                logger.info(f"已切换到密码登录模式 (选择器: {sel})")
+                page.wait_for_timeout(2000)
+                page.screenshot(path="debug/login_page_password_mode.png", full_page=True)
+                break
+        except Exception:
+            continue
 
     # 自动检测用户名输入框
     username_selectors = [
@@ -217,6 +256,27 @@ def do_login(page, config: dict, env: dict, logger: logging.Logger) -> bool:
     if not password_filled:
         logger.error("未找到密码输入框！已保存截图到 debug/login_page.png")
         return False
+
+    # 勾选服务条款复选框（如果存在）
+    tos_selectors = [
+        'input[type="checkbox"]',
+        '.ant-checkbox-input',
+        '.ant-checkbox',
+        'label:has-text("Terms") input',
+        'label:has-text("agree") input',
+    ]
+    for sel in tos_selectors:
+        try:
+            el = page.query_selector(sel)
+            if el:
+                if not el.is_checked():
+                    el.click()
+                    logger.info(f"已勾选服务条款 (选择器: {sel})")
+                else:
+                    logger.info("服务条款已勾选")
+                break
+        except Exception:
+            continue
 
     # 点击登录按钮
     submitted = False
@@ -630,13 +690,28 @@ def main():
             chromium_path = candidates[0]
 
     with sync_playwright() as p:
-        launch_kwargs = {"headless": headless}
+        launch_kwargs = {
+            "headless": headless,
+            "args": ["--disable-http2", "--no-sandbox", "--disable-blink-features=AutomationControlled"],
+        }
         if chromium_path and os.path.exists(chromium_path):
             launch_kwargs["executable_path"] = chromium_path
             logger.info(f"使用浏览器: {chromium_path}")
 
-        # 支持代理配置
+        # 支持代理配置：优先使用 config.yaml，否则从环境变量读取
         proxy_cfg = browser_cfg.get("proxy")
+        if not proxy_cfg:
+            env_proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy") or \
+                        os.environ.get("HTTP_PROXY") or os.environ.get("http_proxy")
+            if env_proxy:
+                # 解析 http://user:pass@host:port 格式
+                from urllib.parse import urlparse
+                parsed = urlparse(env_proxy)
+                proxy_cfg = {"server": f"{parsed.scheme}://{parsed.hostname}:{parsed.port}"}
+                if parsed.username:
+                    proxy_cfg["username"] = parsed.username
+                if parsed.password:
+                    proxy_cfg["password"] = parsed.password
         if proxy_cfg:
             launch_kwargs["proxy"] = proxy_cfg
             logger.info(f"使用代理: {proxy_cfg.get('server', '')}")
@@ -644,6 +719,7 @@ def main():
         browser = p.chromium.launch(**launch_kwargs)
         context = browser.new_context(
             viewport={"width": 1280, "height": 800},
+            ignore_https_errors=True,
             user_agent=(
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
