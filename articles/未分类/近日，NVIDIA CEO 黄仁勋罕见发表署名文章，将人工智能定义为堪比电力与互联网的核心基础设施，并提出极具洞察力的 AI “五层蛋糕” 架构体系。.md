@@ -1,0 +1,292 @@
+---
+title: "近日，NVIDIA CEO 黄仁勋罕见发表署名文章，将人工智能定义为堪比电力与互联网的核心基础设施，并提出极具洞察力的 AI “五层蛋糕” 架构体系。"
+source: "https://www.acecamptech.com/viewpoint/detail/3941"
+category: "未分类"
+date: ""
+downloaded: "2026-03-22 20:16:23 JST"
+---
+
+# 近日，NVIDIA CEO 黄仁勋罕见发表署名文章，将人工智能定义为堪比电力与互联网的核心基础设施，并提出极具洞察力的 AI “五层蛋糕” 架构体系。
+
+Neutral黄仁勋：人工智能是如同电力和互联网一般的核心基础设施
+
+Industry：Expert Insight,Software & Services,Technology Hardware & Equipment,Semiconductors & Semiconductor Equipment
+
+Creation time：2026/03/12
+
+2.3W+ Views|1 Favorites
+
+![](https://image.acecamptech.com/avatar/10501593/1644224174600.jpg)牛呀牛
+
+Investment Director
+
+Follow
+
+# **近日，NVIDIA CEO 黄仁勋罕见发表署名文章，将人工智能定义为堪比电力与互联网的核心基础设施，并提出极具洞察力的 AI “五层蛋糕” 架构体系。**
+
+# 
+
+# 黄仁勋认为，AI不仅是软件的变革，更是一场重塑能源消耗、工厂建造和经济增长路径的**工业变革。这个影响力究竟如何？我们当前处于哪一阶段？**以下，Enjoy：
+
+# 
+
+# 原文链接：https://blogs.nvidia.cn/blog/ai-5-layer-cake/
+
+# 
+
+# **人工智能是塑造当今世界最强大的力量之一。它并非一款精巧的应用程序或单一模型，而是如同电力和互联网一般的核心基础设施。**
+
+ 
+
+人工智能的运行依托实体硬件、实际能源和现实经济规律。它将原材料规模化转化为智能能力，未来所有企业都会运用人工智能，所有国家都会布局人工智能建设。
+
+ 
+
+要理解人工智能的发展逻辑，我们可以从基本原理出发，审视计算机领域发生的根本性变革。
+
+![](https://image.acecamptech.com/sns_opinion/10501593/0.909249717478122.png)
+
+## **从预制软件到实时智能**
+
+ 
+
+在计算机发展的绝大部分历史中，软件都是预制好的：人类编写算法，计算机执行算法。数据必须经过精细结构化处理，存入表格并通过精准查询调取，结构化查询语言也因此成为不可或缺的工具，支撑着这一体系的运转。
+
+ 
+
+而人工智能打破了这一模式。
+
+ 
+
+人类首次拥有了能理解非结构化信息的计算机：它能识别图像、读取文本、聆听声音并理解语义，能结合语境和意图进行推理，最重要的是，它能实时生成智能结果。
+
+ 
+
+人工智能的每一次回应都是全新生成的，每一个答案都取决于用户提供的语境。这并非软件调取预制指令，而是软件根据需求进行推理、生成智能结果的过程。
+
+ 
+
+正是由于智能的实时生成特性，其底层的整个计算体系都不得不被重新打造。
+
+## 
+
+## **作为基础设施的人工智能**
+
+## 
+
+从产业视角看，人工智能体系可拆解为五层架构。
+
+### **能源层**
+
+### 
+
+能源是整个体系的根基。实时生成的智能，需要实时供给的电力支撑。人工智能生成的每一个答案，背后都是电子的流动、热量的调控，以及能源向计算能力的转化。这一层不存在任何抽象化的中间环节，能源是人工智能基础设施的基本前提，也是决定系统智能产出上限的核心约束条件。
+
+### **芯片层**
+
+### 
+
+能源层之上是芯片层。这类处理器专为将能源高效、规模化转化为计算能力而设计。人工智能的工作负载需要极强的并行处理能力、高带宽内存和高速互联技术。芯片层的技术突破，决定着人工智能的规模化发展速度，以及智能服务的成本可及性。
+
+ 
+
+### **基础设施层**
+
+### 
+
+芯片层之上是基础设施层，黄仁勋将其定义为“AI工厂”。涵盖土地、电力输送、冷却系统、建筑工程、网络通信，以及能将数万台处理器整合为一个整体的协同调度系统。这些系统就是人工智能工厂，其设计目的并非存储信息，而是“制造” 智能。
+
+ 
+
+### **模型层**
+
+### 
+
+基础设施层之上是模型层。人工智能模型能理解多类信息，涵盖语言、生物学、化学、物理学、金融、医学乃至物理世界本身。大语言模型只是其中一个类别，蛋白质人工智能、化学人工智能、物理模拟、机器人技术和自主系统等领域，正诞生着最具变革性的研究成果。
+
+ 
+
+### **应用层**
+
+### 
+
+最顶层是创造经济价值的应用层，包括药物研发平台、工业机器人、法律辅助系统、自动驾驶汽车等。自动驾驶汽车是具象化在机械中的人工智能应用，人形机器人则是具象化在躯体中的人工智能应用—— 二者依托相同的五层架构，最终产生不同的应用成果。
+
+**这便是人工智能的五层架构体系：能源→芯片→基础设施→模型→应用**
+
+每一个成功的人工智能应用，都需要调动其下所有层级的支撑，直至为其供能的发电站。因此，黄仁勋认为，AI正在创造未来整个经济领域的就业岗位——从能源和建筑到先进制造、云运维和应用开发。
+
+ 
+
+目前，人工智能的基础设施建设才刚刚起步，全球投入已达数千亿美元，但仍有数万亿美元的基础设施建设需求待满足。
+
+如今，全球范围内的芯片工厂、计算机组装厂和人工智能工厂正以前所未有的规模落地建设，这正成为人类历史上规模最大的基础设施建设浪潮。
+
+ 
+
+这场建设浪潮需要海量的劳动力支撑：人工智能工厂需要电工、水管工、管道安装工、钢铁工人、网络技术人员、设备安装人员和运维人员。这段内容回应了“公众普遍担心AI 会取代人类工作”的焦虑。
+
+**可以看到，这场变革需要的是广泛的劳动力支撑，从基础建设到日常运维，各行各业的劳动者都能参与其中。生产力提升创造了能力，能力扩大进而推动整体经济增长，这是一种正向的强化循环。**
+
+**这意味着，AI 正在创造大量技术性强、待遇优厚且供不应求的新岗位。****而且，**这些都是技术型高薪岗位，且目前供给严重短缺。
+
+ 
+
+与此同时，人工智能也在推动知识经济全领域的生产效率提升。以放射科为例，如今人工智能已能辅助读取医学影像，但放射科医生的需求仍在持续增长，这并非悖论。
+
+ 
+
+放射科医生的核心使命是为患者提供医疗服务，读取影像只是其中一项工作。当人工智能承担更多常规影像解读工作后，医生能将精力更多投入到诊断判断、医患沟通和临床诊疗中。医院的诊疗效率随之提升，能服务更多患者，进而需要招聘更多医护人员。
+
+ 
+
+效率的提升创造了服务容量，而容量的扩大又推动了行业发展。换句话说，AI的出现不是为了替代人，而是为了通过降本增效，做大蛋糕、做大市场增量。听起来反直觉，但生产力的每一次跃迁，最终都是通过释放人的潜力和扩大服务边界，来开启更大规模的经济增长。
+
+ 
+
+## **过去一年发生了哪些变化？**
+
+ 
+
+在过去一年，人工智能跨越了一个关键门槛：模型的性能已足以支撑规模化的实际应用。其推理能力大幅提升，幻觉问题显著减少，落地实用性实现质的飞跃，基于人工智能的应用首次开始创造真实的经济价值。
+
+ 
+
+药物研发、物流、客户服务、软件开发和制造业等领域的人工智能应用，已展现出强劲的产品市场契合度，这些应用也对底层所有层级的能力提出了更高要求。
+
+ 
+
+开源模型在这一过程中发挥着关键作用。全球绝大部分人工智能模型都是免费开放的，科研人员、初创企业、大型企业乃至各个国家，都依托开源模型参与先进人工智能的研发与应用。当开源模型达到行业前沿水平时，改变的不仅是软件领域，更会激活整个五层架构的全链路需求。
+
+ 
+
+DeepSeek-R1就是一个强有力的例子。通过广泛提供强有力的推理模型，加速了应用层的采用，并增加了对训练、基础设施、芯片和其底层能源的需求。
+
+![](https://image.acecamptech.com/sns_opinion/10501593/0.12136661166175089.png)
+
+具体而言，DeepSeek-R1 在该架构中发挥了以下作用：
+
+ 
+
+- 作为“模型层”的突破口：DeepSeek-R1 作为开源推理大模型，其在数学、代码等推理任务上的性能比肩 OpenAI o1 等国际顶尖模型，是开源模型能力的重要突破。
+
+- 向上加速“应用层”普及：通过广泛开放强大的推理能力，它大大降低了开发门槛，加速了各种 AI 应用在顶层的普及与采纳。
+
+- 向下产生强劲的拉动效应：DeepSeek-R1 不仅仅改变了软件领域，它作为一个核心引擎，激活了对其下方每一层架构的需求。随着应用层的普及，它直接带动了对底层训练（Training）、基础设施、芯片和能源的需求增长。
+
+- 带动行业热潮：DeepSeek-R1 的出现令世界感到惊讶，让研究人员、初创公司乃至整个国家都能依靠此类开放模型参与到先进 AI 的建设中。
+
+ 
+
+总的来说，DeepSeek-R1 就像一个催化剂，位于模型层（第四层），通过其强大的开源推理能力拉动了从应用到能源的完整五层架构。
+
+ 
+
+## **这一切意味着什么？**
+
+ 
+
+当我们将人工智能视为核心基础设施，其背后的深层意义便清晰可见。
+
+ 
+
+人工智能始于基于Transformer 架构的大语言模型，但它的内涵远不止于此：**这是一场产业变革，将重塑能源的生产与消费模式、工厂的建设方式、工作的组织形式，以及经济的增长逻辑。**
+
+ 
+
+人工智能工厂的建设，源于智能的实时生成需求；芯片的重新设计，源于效率对人工智能规模化发展的决定性作用；能源成为核心要素，源于它决定了智能产出的终极上限；应用层的加速落地，源于底层模型终于跨越了规模化实用的门槛。
+
+人工智能的五层架构相互赋能、彼此强化。
+
+ 
+
+这正是其基础设施建设规模如此庞大、能同时影响众多行业，且不会局限于单一国家或单一领域的原因。未来，所有企业都会运用人工智能，所有国家都会布局人工智能建设。
+
+ 
+
+此前，黄仁勋在瑞士达沃斯世界经济论坛年会上强调：“人工智能就是基础设施。”他还主张每个国家都应像对待电力或道路一样对待人工智能，应该把人工智能作为基础设施的一部分。
+
+ 
+
+并且，黄仁勋敦促各国建立自己的人工智能能力，借鉴当地语言和文化。他说：“发展你的人工智能，继续完善它，让你的国家智能成为生态系统的一部分。人工智能非常易于使用——它是历史上最易使用的软件。”他甚至预判，仅仅两到三年，人工智能就覆盖了近十亿人。
+
+ 
+
+因此，黄仁勋认为，人工智能素养正变得不可或缺，“很明显，学习如何使用人工智能——如何引导、管理、保护、评估人工智能是至关重要的。”
+
+ 
+
+可以看到，我们仍处于这场变革的早期阶段：大量基础设施尚未建成，大批相关人才尚未培养，诸多潜在机遇尚未发掘。人类才刚刚推开这扇大门，机会始终属于每一个被释放了潜能、重新发现自我价值的人和公司。
+
+0
+
+0
+
+Share
+
+Favorite
+
+Solemn statement: The above content is based on public information, only represents personal or guests' views. It does not represent any position of AceCamp, any companies, any institutions. The volatility of the stock market is related to many factors. Investment decisions are made by individuals based on their own research and analysis. The purpose of this article or event is the sharing of facts and views and does not constitute any investment suggestions. This article or event content must not be forwarded, reproduced, duplicated, published, modified, or quoted in whole or in part by any institution or individual in any form without the permission of AceCamp and the author. The above content is exclusive to paying clients, and all institutions and individuals are strictly bound by confidentiality obligations and intellectual property agreements. AceCamp is not responsible for the impact of any third party's unauthorized acts while maintaining the rights for legal actions.
+
+Comments
+
+Published
+
+![No Data](https://static.acecamptech.com/system/empty.svg)
+
+No Data
+
+For You
+
+- [Channel Check on Liquid Metal and TIM Materials: Transition from GB300 Gallium-Based to Rubin Indium-Based, TIM1/TIM2 Hierarchy Definition, Per-Card Value and Incremental Estimates for Cold Plate Supporting Materials, Customer Adoption, Market Share Landscape, and New Material Roadmap – Focus on NVIDIA/Foxconn/Boyd/Indium Corporation/Fironda/Sinopec
+
+  Note2026/03/21 12:25](/article/detail/70560044)
+- [Comparative Analysis of Major US Energy Storage Companies—Tesla/FLNC/Sungrow
+
+  Insight2026/03/21 02:00](/article/detail/70560037)
+- [Agentic AI's Compute Explosion Is Real—But Value Only Belongs to Those Who Define the Architecture [GTC/OFC 2026 Series]
+
+  Insight2026/03/21 00:26](/article/detail/70560022)
+- [Google TPU Power Supply Channel Check: V7 5.5kW Sample Validation, Upgrade from 5.5kW to 8.5kW, Comparison of Navitas/Infineon Solutions, Delta as Primary Supplier and Share Allocation for Secondary/Tertiary Suppliers, 2026 Market Size Estimate – Focus on Delta, Lite-On, Quanta, Navitas Semiconductor, Infineon, Google, NVIDIA
+
+  Note2026/03/20 10:26](/article/detail/70560025)
+- [Update on Leading Forestry Carbon Sink Companies—Business Model, Project Development, and Cooperation Status
+
+  Note2026/03/20 07:26](/article/detail/70560009)
+
+- 1
+- 2
+- 3
+- 4
+
+![logo](https://static.acecamptech.com/system/app/app_logo.svg)APP Download
+
+Android & iOS
+
+![wxchat-official](https://static.acecamptech.com/www/static/png/wxchat-official-DRqP0C4T.png)
+
+![logo](data:image/svg+xml,%3csvg%20width='20'%20height='20'%20viewBox='0%200%2020%2020'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3crect%20width='20'%20height='20'%20rx='4'%20fill='%2304CD65'/%3e%3cpath%20d='M12.8315%207.93333C13.015%207.93333%2013.1967%207.94677%2013.3768%207.96677C12.8868%205.69093%2010.4474%204%207.66297%204C4.55%204%202%206.11644%202%208.80395C2%2010.3552%202.84837%2011.6291%204.26605%2012.6172L3.69965%2014.3164L5.67932%2013.3262C6.38769%2013.4661%206.95603%2013.6098%207.66296%2013.6098C7.84066%2013.6098%208.01687%2013.6011%208.19161%2013.5874C8.08097%2013.2097%208.01687%2012.8142%208.01687%2012.4038C8.01688%209.93603%2010.1415%207.93333%2012.8315%207.93333ZM9.78657%206.40184C10.213%206.40184%2010.4954%206.68164%2010.4954%207.1067C10.4954%207.53005%2010.213%207.81375%209.78657%207.81375C9.36213%207.81375%208.93624%207.53005%208.93624%207.1067C8.93624%206.68162%209.36213%206.40184%209.78657%206.40184ZM5.82327%207.81373C5.39888%207.81373%204.97052%207.53003%204.97052%207.10667C4.97052%206.68162%205.39886%206.40182%205.82327%206.40182C6.24769%206.40182%206.53018%206.68162%206.53018%207.10667C6.53018%207.53003%206.24769%207.81373%205.82327%207.81373ZM18%2012.3359C18%2010.0776%2015.7344%208.23682%2013.1898%208.23682C10.4954%208.23682%208.3733%2010.0776%208.3733%2012.3359C8.3733%2014.5981%2010.4954%2016.435%2013.1898%2016.435C13.7538%2016.435%2014.3226%2016.2932%2014.889%2016.1516L16.4423%2017L16.0164%2015.5884C17.1531%2014.7378%2018%2013.6098%2018%2012.3359ZM11.6282%2011.6291C11.3462%2011.6291%2011.0618%2011.3493%2011.0618%2011.0639C11.0618%2010.7825%2011.3462%2010.499%2011.6282%2010.499C12.0565%2010.499%2012.337%2010.7825%2012.337%2011.0639C12.337%2011.3493%2012.0565%2011.6291%2011.6282%2011.6291ZM14.7431%2011.6291C14.4631%2011.6291%2014.1806%2011.3493%2014.1806%2011.0639C14.1806%2010.7825%2014.4631%2010.499%2014.7431%2010.499C15.1675%2010.499%2015.4519%2010.7825%2015.4519%2011.0639C15.4519%2011.3493%2015.1676%2011.6291%2014.7431%2011.6291Z'%20fill='white'/%3e%3c/svg%3e)WeChat Official Account
+
+AceCampTech
+
+Corporate Address
+
+Beijing:307 S3-M26, 3/F, Hopson Place Office Tower, No.A22 Xidawang Road, Chaoyang District, Beijing, China
+
+Hong Kong:66/F, The Center, 99 Queen’s Road Central, Hong Kong
+
+TEL
+
++86 10 53322308
+
++852 69069737
+
+Email
+
+[support@acecamptech.com](mailto:support@acecamptech.com)
+
+Copyright©2026 AceCampTech.com. All Rights Reserved.
+
+[Terms of Service](https://terms.acecamptech.com/agreement/index.html)[Privacy Agreement](https://terms.acecamptech.com/privacy/20240120/index.html)
+
+[京ICP备2025158098号-1](https://beian.miit.gov.cn/#/Integrated/index)[京公网安备 11010502043336号](http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010502043336)
