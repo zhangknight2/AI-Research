@@ -852,6 +852,7 @@ def main():
     parser.add_argument("--discover", action="store_true", help="仅发现文章，不下载（调试用）")
     parser.add_argument("--no-headless", action="store_true", help="显示浏览器窗口（调试用）")
     parser.add_argument("--skip-login", action="store_true", help="跳过登录步骤")
+    parser.add_argument("--limit", type=int, default=0, help="限制抓取文章数量（0=不限制）")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -958,7 +959,12 @@ def main():
             return
 
         # 第2步：逐篇抓取（加入随机延迟，防止触发反爬机制）
+        limit = args.limit
         for i, art_info in enumerate(articles):
+            if limit > 0 and new_count >= limit:
+                logger.info(f"已达到抓取上限 ({limit} 篇)，停止")
+                break
+
             aid = article_id(art_info["url"])
 
             if aid in history["downloaded"]:
