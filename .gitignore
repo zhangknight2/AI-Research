@@ -14,3 +14,6 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# 研究项目 - 原始材料不提交（可能含敏感信息）
+research/materials/
