@@ -1,0 +1,19 @@
+# AceCamp 文章抓取配置
+base_url: "https://www.acecamptech.com"
+search_url: "https://www.acecamptech.com/search"
+login_url: "https://www.acecamptech.com/login"
+
+# 文章保存目录
+output_dir: "articles"
+
+# 已下载文章的记录文件
+history_file: "data/downloaded.json"
+
+# 浏览器设置
+browser:
+  headless: true
+  timeout: 30000  # 页面加载超时 (ms)
+  wait_after_load: 3000  # 页面加载后等待时间 (ms)，确保SPA渲染完成
+
+# 日志
+log_file: "logs/scraper.log"

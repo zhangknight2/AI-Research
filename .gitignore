@@ -1,0 +1,16 @@
+# 凭据
+.env
+
+# 下载的文章（按需决定是否提交）
+# articles/
+
+# 运行数据
+data/
+logs/
+debug/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
