@@ -790,13 +790,20 @@ def save_article_as_markdown(article: dict, output_dir: str, logger: logging.Log
     category = article["category"]  # 共享纪要 / 本营纪要 / 观点
     date_str = extract_date_from_str(article.get("date", ""))
     title_part = sanitize_filename(article["title"])
-    # 截断标题，防止文件名过长（GitHub 有路径长度限制）
-    if len(title_part) > 50:
-        title_part = title_part[:50]
 
     # 使用 URL 末尾的 ID 确保文件名唯一
     url_id = article["url"].rstrip("/").split("/")[-1]
-    filename = f"【{category}】{date_str}_{title_part}_{url_id}.md"
+
+    # 动态截断标题：GitHub 文件名限制约 255 字节
+    # 前缀 "【分类】日期_" + 后缀 "_ID.md" 的字节数
+    prefix = f"【{category}】{date_str}_"
+    suffix = f"_{url_id}.md"
+    max_title_bytes = 250 - len(prefix.encode('utf-8')) - len(suffix.encode('utf-8'))
+    # 按字符逐个截断，确保不超过字节限制
+    while len(title_part.encode('utf-8')) > max_title_bytes:
+        title_part = title_part[:-1]
+
+    filename = f"{prefix}{title_part}{suffix}"
     filepath = os.path.join(output_dir, filename)
 
     now_jst = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S JST")
