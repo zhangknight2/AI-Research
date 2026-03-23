@@ -826,13 +826,14 @@ downloaded: "{now_jst}"
 
     logger.info(f"已保存: {filepath}")
 
-    # AI 相关文章额外复制到 AI industry 文件夹
+    # AI 相关文章移到 AI industry 文件夹（非AI文章留在外层）
     if is_ai_related(article["title"], article.get("content_md", "")):
         ai_dir = os.path.join(output_dir, "AI industry")
         os.makedirs(ai_dir, exist_ok=True)
         ai_filepath = os.path.join(ai_dir, filename)
-        shutil.copy2(filepath, ai_filepath)
-        logger.info(f"AI相关文章已复制到: {ai_filepath}")
+        shutil.move(filepath, ai_filepath)
+        filepath = ai_filepath
+        logger.info(f"AI相关文章已移至: {ai_filepath}")
 
     return filepath
 
