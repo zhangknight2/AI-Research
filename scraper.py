@@ -444,10 +444,32 @@ def discover_articles(page, base_url: str, logger: logging.Logger) -> list[dict]
                 except Exception:
                     pass
 
+                # 从搜索页卡片提取发布时间（如"2026/03/22"或"21小时前"）
+                publish_date = ""
+                try:
+                    card = el.evaluate("""el => {
+                        let card = el.closest('a') || el.parentElement;
+                        // 遍历3层父元素寻找时间信息
+                        for (let i = 0; i < 5; i++) {
+                            if (!card) break;
+                            let text = card.innerText || '';
+                            // 匹配 YYYY/MM/DD 格式
+                            let m = text.match(/(\\d{4})[/\\-](\\d{1,2})[/\\-](\\d{1,2})/);
+                            if (m) return m[1] + '-' + m[2].padStart(2,'0') + '-' + m[3].padStart(2,'0');
+                            card = card.parentElement;
+                        }
+                        return '';
+                    }""")
+                    if card:
+                        publish_date = card
+                except Exception:
+                    pass
+
                 articles.append({
                     "title": title,
                     "url": full_url,
-                    "category": category
+                    "category": category,
+                    "publish_date": publish_date
                 })
         except Exception:
             continue
@@ -903,6 +925,7 @@ def main():
     parser.add_argument("--skip-login", action="store_true", help="跳过登录步骤")
     parser.add_argument("--limit", type=int, default=0, help="限制抓取文章数量（0=不限制）")
     parser.add_argument("--today", action="store_true", help="只抓取今天（东八区）发布的文章")
+    parser.add_argument("--date", type=str, default="", help="只抓取指定日期的文章（格式：YYYY-MM-DD）")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -992,6 +1015,17 @@ def main():
         articles = run_discovery(page, config, logger)
         logger.info(f"共发现 {len(articles)} 篇文章")
 
+        # 日期预过滤：如果指定了日期，先用搜索页的发布日期过滤，减少不必要的请求
+        target_date = ""
+        if args.today:
+            target_date = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+        elif args.date:
+            target_date = args.date
+        if target_date:
+            before = len(articles)
+            articles = [a for a in articles if not a.get("publish_date") or a["publish_date"] == target_date]
+            logger.info(f"日期预过滤: {before} → {len(articles)} 篇 (目标: {target_date})")
+
         if not articles:
             logger.warning("未发现任何文章！")
             save_debug_snapshot(page, logger)
@@ -1041,13 +1075,9 @@ def main():
             if article["category"] == "未分类" and art_info.get("category", "未分类") != "未分类":
                 article["category"] = art_info["category"]
 
-            # --today 模式：只保存今天（东八区）发布的文章
-            if args.today:
-                today_str = datetime.now(CN_TZ).strftime("%Y-%m-%d")
-                article_date = extract_date_from_str(article.get("date", ""))
-                if article_date != today_str:
-                    logger.info(f"跳过非今日文章 (发布日期: {article_date}): {article['title']}")
-                    continue
+            # 使用搜索页的发布日期覆盖文章页日期（搜索页日期是AceCamp实际发布日期）
+            if art_info.get("publish_date"):
+                article["date"] = art_info["publish_date"]
 
             filepath = save_article_as_markdown(article, output_dir, logger)
 
