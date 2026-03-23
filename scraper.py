@@ -30,8 +30,8 @@ from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 
 
-# 东京时区
-JST = timezone(timedelta(hours=9))
+# 东八区（北京时间）
+CN_TZ = timezone(timedelta(hours=8))
 
 
 def setup_logging(log_file: str) -> logging.Logger:
@@ -677,8 +677,11 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
     content_md = re.sub(r'\n{3,}', '\n\n', content_md).strip()
 
     # 通用标题列表（页面未渲染真实标题时的占位符）
+    # 通用/导航标题（页面未渲染真实标题时的占位符或导航栏元素）
     generic_titles = {"article details", "insight details", "insights", "untitled", "",
-                      "文章详情", "观点详情", "纪要详情", "详情"}
+                      "文章详情", "观点详情", "纪要详情", "详情",
+                      "ai助手", "活动日历", "首页", "问答", "搜索", "本营圈",
+                      "公司", "营主", "服务报价"}
 
     # 如果标题是通用的，尝试从正文提取真实标题
     if title.lower() in generic_titles:
@@ -689,14 +692,16 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
                 title = line[:200]
                 break
 
-    # 如果仍然是通用标题，使用搜索页发现的标题作为后备
-    if title.lower() in generic_titles and fallback_title:
+    # 使用搜索页标题作为后备（观点页面的 h1 通常是导航元素，不可靠）
+    if fallback_title:
         # 清理 fallback_title（搜索页的标题可能包含序号前缀如 "5.\n"）
         clean_fallback = re.sub(r'^\d+\.\s*', '', fallback_title).strip()
         # 去掉多行，只取第一行有意义的部分
         first_line = clean_fallback.split('\n')[0].strip()
         if first_line and first_line.lower() not in generic_titles:
-            title = first_line
+            # 通用标题 → 直接替换；非通用标题 → 仅对观点页面替换
+            if title.lower() in generic_titles or '/viewpoint/detail/' in url:
+                title = first_line
 
     # 根据标签页来源分类（优先），或根据 URL 判断
     if source_category == "观点" or '/viewpoint/detail/' in url:
@@ -756,12 +761,12 @@ AI_KEYWORDS_SUBSTRING = [
 def extract_date_from_str(date_str: str) -> str:
     """从日期字符串中提取 YYYY-MM-DD 格式的日期"""
     if not date_str:
-        return datetime.now(JST).strftime("%Y-%m-%d")
+        return datetime.now(CN_TZ).strftime("%Y-%m-%d")
     # 匹配 YYYY/MM/DD 或 YYYY-MM-DD
     m = re.search(r'(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})', date_str)
     if m:
         return f"{m.group(1)}-{m.group(2).zfill(2)}-{m.group(3).zfill(2)}"
-    return datetime.now(JST).strftime("%Y-%m-%d")
+    return datetime.now(CN_TZ).strftime("%Y-%m-%d")
 
 
 def is_ai_related(title: str, content: str) -> bool:
@@ -806,7 +811,7 @@ def save_article_as_markdown(article: dict, output_dir: str, logger: logging.Log
     filename = f"{prefix}{title_part}{suffix}"
     filepath = os.path.join(output_dir, filename)
 
-    now_jst = datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S JST")
+    now_jst = datetime.now(CN_TZ).strftime("%Y-%m-%d %H:%M:%S CN_TZ")
 
     md_content = f"""---
 title: "{article['title']}"
@@ -882,7 +887,7 @@ def save_debug_snapshot(page, logger: logging.Logger):
     """保存当前页面的截图和HTML，用于调试"""
     debug_dir = "debug"
     os.makedirs(debug_dir, exist_ok=True)
-    timestamp = datetime.now(JST).strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now(CN_TZ).strftime("%Y%m%d_%H%M%S")
     page.screenshot(path=f"{debug_dir}/page_{timestamp}.png", full_page=True)
     html_content = page.content()
     with open(f"{debug_dir}/page_{timestamp}.html", "w", encoding="utf-8") as f:
@@ -897,6 +902,7 @@ def main():
     parser.add_argument("--no-headless", action="store_true", help="显示浏览器窗口（调试用）")
     parser.add_argument("--skip-login", action="store_true", help="跳过登录步骤")
     parser.add_argument("--limit", type=int, default=0, help="限制抓取文章数量（0=不限制）")
+    parser.add_argument("--today", action="store_true", help="只抓取今天（东八区）发布的文章")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -905,7 +911,7 @@ def main():
     logger = setup_logging(config.get("log_file", "logs/scraper.log"))
     logger.info("=" * 60)
     logger.info("AceCamp 文章抓取器启动")
-    logger.info(f"当前时间 (JST): {datetime.now(JST).strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"当前时间 (CN_TZ): {datetime.now(CN_TZ).strftime('%Y-%m-%d %H:%M:%S')}")
     logger.info("=" * 60)
 
     output_dir = config.get("output_dir", "articles")
@@ -1035,13 +1041,21 @@ def main():
             if article["category"] == "未分类" and art_info.get("category", "未分类") != "未分类":
                 article["category"] = art_info["category"]
 
+            # --today 模式：只保存今天（东八区）发布的文章
+            if args.today:
+                today_str = datetime.now(CN_TZ).strftime("%Y-%m-%d")
+                article_date = extract_date_from_str(article.get("date", ""))
+                if article_date != today_str:
+                    logger.info(f"跳过非今日文章 (发布日期: {article_date}): {article['title']}")
+                    continue
+
             filepath = save_article_as_markdown(article, output_dir, logger)
 
             history["downloaded"][aid] = {
                 "title": article["title"],
                 "url": art_info["url"],
                 "category": article["category"],
-                "downloaded_at": datetime.now(JST).isoformat(),
+                "downloaded_at": datetime.now(CN_TZ).isoformat(),
                 "filepath": filepath
             }
             save_history(history_file, history)

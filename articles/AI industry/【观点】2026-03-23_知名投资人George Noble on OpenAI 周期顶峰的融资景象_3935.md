@@ -1,12 +1,12 @@
 ---
-title: "AI助手"
+title: "知名投资人George Noble on OpenAI: 周期顶峰的融资景象"
 source: "https://www.acecamptech.com/viewpoint/detail/3935"
 category: "观点"
 date: "2026/03/23 周一 03:00"
-downloaded: "2026-03-23 09:51:24 JST"
+downloaded: "2026-03-23 09:16:05 CN_TZ"
 ---
 
-# AI助手
+# 知名投资人George Noble on OpenAI: 周期顶峰的融资景象
 
 首页
 问答
