@@ -605,6 +605,7 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
     # ====== 第1步：先截头 —— 去掉导航栏和头部元数据，找到正文起始点 ======
     content_start_markers = [
         '以下为专家观点：', '以下为专家观点',
+        '以下内容为专家分享', '以下为专家分享',
         '已享VIP免费\n', 'VIP Free\n',
         'Below are expert opinions',
     ]
@@ -665,7 +666,7 @@ def scrape_article_content(page, url: str, base_url: str, logger: logging.Logger
     ]
     for marker in cleanup_markers:
         idx = content_md.find(marker)
-        if idx > 0:
+        if idx > 500:  # 截断后至少保留500字符，防止误截正文
             content_md = content_md[:idx].rstrip()
 
     # 清理尾部的按钮文本
